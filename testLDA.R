@@ -1,9 +1,8 @@
 require("lda")
 require("pracma")
 
-sldaModel <- readRDS()
-vocabModel <- readRDS()
+sldaModel <- readRDS(model_filename)
 
-corpus <- lexicalize(documents, lower=TRUE, vocab=vocabulary)
+corpus <- lexicalize(testDocuments, lower=TRUE, vocab=vocabulary)
 
-predictions <- slda.predict(corpus, sldaModel$topics, sldaModel$model, alpha = alpha, eta = eta)
+predictions <- slda.predict(corpus, topics, sldaModel, alpha = alpha, eta = eta)

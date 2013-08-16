@@ -5,7 +5,10 @@ from pyper import R
 
 class supervisedLDA():
 
-    def __init__(self, alpha=1.0, numtopics=5, eta=0.1, logistic=True, lamda=1.0, e_iter=10, m_iter=4, variance=0.25):
+    def __init__(self, dataFileName, alpha=1.0, numtopics=5, eta=0.1, logistic=True, lamda=1.0, e_iter=10, m_iter=4, variance=0.25):
+        model_filename = "models/%s.RDS" % (dataFileName)
+        topic_filename = "topics/%s.RDS" % (dataFileName)
+        vocab_filename = "vocabulary/%s.RDS" % (dataFileName)
         self.params = {
             "numtopics": numtopics,
             "alpha": alpha,
@@ -15,6 +18,10 @@ class supervisedLDA():
             "e_iter": e_iter,
             "m_iter": m_iter,
             "variance": variance
+            "dataFiles": dataFileName,
+            "model_filename": model_filename,
+            "topic_filename": topic_filename,
+            "vocab_filename": vocab_filename
         }
         self.r = R(use_pandas=True, use_numpy=True)
         self.assign_R_params()
@@ -31,25 +38,27 @@ class supervisedLDA():
         self.r.assign("labels", labels)
         self.r.run('source("trainLDA.R")')
         topics = self.r["topics"]
-        model = self.r["model"]
-        print "Got relevant variables"
+        vocab = self.r["vocabulary"]
+        self.update_params("topics", topics)
+        self.update_params("vocab", vocab)
+        self.assign_R_params()
 
     def predict(self, documents, model, vocabulary, num_iter=10, avg_iter=5):
-        self.r.assign("documents", documents)
-        self.r.assign("trainedModel", model)
-        self.r.assign("vocabulary", vocabulary)
+        self.r.assign("testDocuments", documents)
         self.r.run('source("testLDA.R")')
 
-    def save_model(self, model_filename, vocab_filename):
-        self.r.assign("model_filename", model_filename)
-        self.r.assign("vocab_filename", vocab_filename)
+    def save_model(self):
         self.r.run('source("saveModel.R")')
 
-    def load_model(self, model_filename, vocab_filename):
+    def load_model(self):
         self.r.run('source("loadModel.R")')
-        model = self.r["model"]
         vocab = self.r["vocab"]
         topics = self.r["topics"]
-        self.update_params("model", model)
         self.update_params("vocab", vocab)
         self.update_params("topics", topics)
+        self.assign_R_params()
+
+    def set_Data(self, documents, labels):
+        self.update_params("documents", documents)
+        self.update_params("labels", labels)
+        self.assign_R_params()
