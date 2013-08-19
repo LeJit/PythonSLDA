@@ -1,14 +1,14 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 from pyper import R
-
+import os
 
 class supervisedLDA():
 
     def __init__(self, dataFileName, alpha=1.0, numtopics=5, eta=0.1, logistic=True, lamda=1.0, e_iter=10, m_iter=4, variance=0.25):
-        model_filename = "models/%s.RDS" % (dataFileName)
-        topic_filename = "topics/%s.RDS" % (dataFileName)
-        vocab_filename = "vocabulary/%s.RDS" % (dataFileName)
+        model_filename = "%s/model_%s.RDS" % (os.getcwd(), dataFileName)
+        topic_filename = "%s/topics_%s.RDS" % (os.getcwd(), dataFileName)
+        vocab_filename = "%s/vocabulary_%s.RDS" % (os.getcwd(), dataFileName)
         self.params = {
             "numtopics": numtopics,
             "alpha": alpha,
@@ -33,7 +33,7 @@ class supervisedLDA():
         for (key, value) in self.params.iteritems():
             self.r.assign(key, value)
 
-    def train(self, documents, labels):
+    def fit(self, documents, labels):
         self.r.assign("documents", documents)
         self.r.assign("labels", labels)
         self.r.run('source("trainLDA.R")')
@@ -43,9 +43,11 @@ class supervisedLDA():
         self.update_params("vocab", vocab)
         self.assign_R_params()
 
-    def predict(self, documents, model, vocabulary, num_iter=10, avg_iter=5):
+    def predict(self, documents):
         self.r.assign("testDocuments", documents)
         self.r.run('source("testLDA.R")')
+        predictions = self.r["predictions"]
+        return predictions
 
     def save_model(self):
         self.r.run('source("saveModel.R")')
